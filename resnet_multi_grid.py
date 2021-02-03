@@ -187,6 +187,8 @@ class ResNet(fluid.dygraph.Layer):
             l1_shortcut=False
         
         self.layer1 = fluid.dygraph.Sequential(
+            # 在这里*表示将函数make_layer得到的结果组成一个元组。
+            # keras接口中，Sequential所接收的参数就是一个元组，元组中每个元素代表一个层。
                 *self.make_layer(block,
                                  num_channels[0],
                                  num_filters[0],
