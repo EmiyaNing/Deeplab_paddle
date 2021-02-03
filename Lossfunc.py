@@ -13,7 +13,7 @@ def SegLoss(preds, labels, ignore_index=255):
 
     costfunc       = fluid.layers.cross_entropy
     preds          = fluid.layers.transpose(preds, (0, 2, 3, 1))
-    print(preds.shape)
+    #print(preds.shape)
     # mask统计labels中不等于ignore_index的元素的个数。
     mask = (labels!=ignore_index)
     # 将mask中每个元素的类型转换为float32。
