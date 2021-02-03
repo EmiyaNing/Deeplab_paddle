@@ -3,12 +3,13 @@ import random
 import numpy as np
 import cv2
 import paddle.fluid as fluid
+import image_process
 
 class Transform(object):
     def __init__(self, size):
         self.size = size
 
-    def __call__(self, input, label):
+    def __call__(self, input, label, flag = False):
         '''
          对于input图片，在完成resize工作之后还需要进行相应的归一化操作。
          否则在训练模型的时候会存在很大的误差。
@@ -16,7 +17,11 @@ class Transform(object):
         '''
         input = cv2.resize(input, (self.size, self.size), interpolation=cv2.INTER_LINEAR) / 255
         label = cv2.resize(label, (self.size, self.size), interpolation=cv2.INTER_NEAREST).astype("int64")
-        return input, label
+        for i in range(label.shape[0]):
+            for j in range(label.shape[1]):
+                if label[i][j] > 58:
+                    flag = True
+        return input, label, flag
 
 
 class Dataloader():
@@ -44,9 +49,9 @@ class Dataloader():
         assert h == h1, "Error shape!!"
         assert w == w1, "Error shape!!"
         if self.transform:
-            input, label = self.transform(input, label)
+            input, label, flag = self.transform(input, label)
             label        = label[:,:,np.newaxis]
-        return input,label
+        return input,label, flag
 
     def __len__(self):
         return len(self.data_list)
@@ -61,7 +66,9 @@ class Dataloader():
             input  = cv2.imread(data_path)
             input  = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
             label  = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
-            input, label = self.preprocess(input, label)
+            input, label, flag = self.preprocess(input, label)
+            if flag:
+                image_process(label_path)
             yield input, label
 
 def main():
