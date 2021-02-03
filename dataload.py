@@ -68,7 +68,7 @@ class Dataloader():
             label  = cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
             input, label, flag = self.preprocess(input, label)
             if flag:
-                image_process(label_path)
+                image_process.image_Process(label_path)
             yield input, label
 
 def main():
