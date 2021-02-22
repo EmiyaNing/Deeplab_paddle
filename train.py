@@ -44,7 +44,8 @@ def train(dataloader, model, costfunction, optimizer, epoch, total_batch):
     return train_loss_meter.avg
 
 def main():
-    Place = paddle.fluid.CPUPlace()
+    #Place = paddle.fluid.CPUPlace()
+    Place = paddle.fluid.CUDAPlace(0)
     with fluid.dygraph.guard(Place):
         transform  = Transform(256)
         dataload   = Dataloader(args.image_folder, args.image_list_file, transform, True)
