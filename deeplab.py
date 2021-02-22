@@ -89,7 +89,7 @@ class DeepLab(Layer):
     def __init__(self, num_classes=59):
         super(DeepLab, self).__init__()
         back = ResNet50(pretrained=False,duplicate_blocks=True)
-
+        self.num_classes = num_classes
         self.layer0 = fluid.dygraph.Sequential(
             back.conv,
             back.pool2d_max
@@ -104,6 +104,18 @@ class DeepLab(Layer):
         self.layer7 = back.layer7
         feature_dim = 2048
         self.classifier = DeepLabHead(feature_dim, num_classes)
+    
+    def combine_channels(self, input):
+        new_data = np.zeros([input.shape[0], 1, input.shape[2], input.shape[3]], dtype='float32')
+        np_data  = input.numpy()
+        for i in range(self.num_classes):
+            sub_matrix = np_data[:, i, :, :]
+            sub_matrix = sub_matrix[:, np.newaxis, :, :]
+            sub_matrix[sub_matrix >  0.5] = i
+            sub_matrix[sub_matrix <= 0.5] = 0
+            new_data[sub_matrix == i] = i
+        return new_data
+
 
     def forward(self, inputs):
         n, c, h, w = inputs.shape
@@ -118,6 +130,7 @@ class DeepLab(Layer):
         
         x = self.classifier(x)
         x = fluid.layers.interpolate(x, (h,w), align_corners=False)
+        x = self.combine_channels(x)
         return x
 
 
@@ -128,11 +141,12 @@ class DeepLab(Layer):
 
 def main():
     with fluid.dygraph.guard():
-        x_data = np.random.rand(2, 3, 512, 512).astype(np.float32)
+        x_data = np.random.rand(2, 3, 256, 256).astype(np.float32)
         x = to_variable(x_data)
         model = DeepLab(num_classes=59)
         model.eval()
         pred = model(x)
+        pred = fluid.dygraph.to_variable(pred)
         print(pred.shape)
 
 
